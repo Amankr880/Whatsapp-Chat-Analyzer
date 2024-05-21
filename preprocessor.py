@@ -3,15 +3,27 @@ import pandas as pd
 
 def preprocessor(data):
 
-    pattern = '\d{1,2}\/\d{1,2}\/\d{2},\s\d{1,2}:\d{2}\s(?:am|pm)\s-\s'
-    messages = re.split(pattern, data)[1:]
-    dates = re.findall(pattern, data)
+    pattern1 = '\d{1,2}\/\d{1,2}\/\d{2},\s\d{1,2}:\d{2}\s(?:am|pm)\s-\s'
+    pattern2 = '\d{1,2}/\d{1,2}/\d{2,4},\s\d{1,2}:\d{2}\s-\s'
+
+    messages = re.split(pattern1, data)[1:]
+    dates = re.findall(pattern1, data)
+
+    if (messages == []):
+        messages = re.split(pattern2, data)[1:]
+
+    if (dates == []):
+        dates = re.findall(pattern2, data)
 
     # converting datetime into format
     df = pd.DataFrame({'user_message':messages, 'message_date': dates})
     df['message_date'] = df['message_date'].str.replace('\u202f', ' ')
-    datetime_format = '%d/%m/%y, %I:%M %p - '
-    df['message_date'] = pd.to_datetime(df['message_date'], format=datetime_format)
+    datetime_format1 = '%d/%m/%y, %I:%M %p - '
+    datetime_format2 = '%d/%m/%Y, %H:%M - '
+    try: 
+        df['message_date'] = pd.to_datetime(df['message_date'], format=datetime_format1)
+    except:
+        df['message_date'] = pd.to_datetime(df['message_date'], format=datetime_format2)
     df.rename(columns={'message_date': 'date'}, inplace=True)
 
     # seprate user and messages
